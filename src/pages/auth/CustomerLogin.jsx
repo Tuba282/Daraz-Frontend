@@ -1,27 +1,35 @@
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { FiMail, FiLock } from 'react-icons/fi';
-import { loginUser, clearError } from '../../store/slices/authSlice';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
+import React, { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { FiLock, FiMail } from "react-icons/fi";
+import {
+  loginUser,
+  googleLogin,
+  clearError,
+} from "../../store/slices/authSlice";
+import { FcGoogle } from "react-icons/fc";
 
 const CustomerLogin = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated, user } = useSelector(
+    (state) => state.auth,
+  );
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'customer') {
-      navigate('/');
+    if (isAuthenticated && user?.role === "customer") {
+      navigate("/");
     } else if (isAuthenticated) {
-      // If a vendor/admin is trying to access customer login while logged in
-      toast.error('Please logout first to login as customer');
+      toast.error("Please logout first to login as customer");
     }
-    
+
     if (error) {
       toast.error(error);
       dispatch(clearError());
@@ -29,97 +37,151 @@ const CustomerLogin = () => {
   }, [isAuthenticated, error, navigate, dispatch, user]);
 
   const onSubmit = (data) => {
-    dispatch(loginUser(data)).unwrap().then((res) => {
-      if(res.user.role !== 'customer') {
-          toast.error('Invalid customer credentials');
-          // we could dispatch logout here if we strictly want to enforce
-      } else {
-        toast.success('Welcome back!');
-        navigate('/');
-      }
-    }).catch(()=>{}); // Error handled by useEffect
+    dispatch(loginUser(data))
+      .unwrap()
+      .then((res) => {
+        if (res.user.role !== "customer") {
+          toast.error("Invalid customer credentials");
+        } else {
+          toast.success("Welcome back!");
+          navigate("/");
+        }
+      })
+      .catch(() => {});
+  };
+
+  const handleGoogleLogin = () => {
+    dispatch(googleLogin())
+      .unwrap()
+      .then((res) => {
+        toast.success("Google login successful!");
+        navigate("/");
+      })
+      .catch(() => {});
   };
 
   return (
-    <div className="w-full bg-[#f5f5f5] min-h-[70vh] flex flex-col items-center py-10 font-sans">
-      
-      <div className="w-full max-w-5xl flex justify-between items-end mb-4 px-4">
-        <h1 className="text-[22px] text-gray-700 font-normal">Welcome to Daraz! Please login.</h1>
-        <span className="text-xs text-gray-500">
-          New member? <Link to="/register" className="text-blue-500 hover:underline">Register</Link> here.
-        </span>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Welcome to Daraz!
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Please login to your account.
+        </p>
       </div>
 
-      <div className="w-full max-w-5xl bg-white p-8 md:p-12 rounded-sm shadow-sm flex flex-col md:flex-row gap-8">
-        
-        {/* Left Side - Login Form */}
-        <div className="flex-1 max-w-md">
-          <h2 className="text-lg font-medium text-gray-800 mb-6">Login with Password</h2>
-          
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-card sm:rounded-lg sm:px-10 border border-gray-100">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Phone Number or Email*</label>
-              <input 
-                {...register('email', { required: 'Email/Phone is required' })}
-                type="text" 
-                placeholder="Please enter your Phone Number or Email" 
-                className="w-full border border-gray-300 rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary placeholder-gray-400"
-              />
-              {errors.email && <span className="text-red-500 text-xs mt-1">{errors.email.message}</span>}
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-xs text-gray-600">Password*</label>
-                <a href="#" className="text-xs text-blue-500 hover:underline">Forgot Password?</a>
-              </div>
-              <div className="relative">
-                <input 
-                  {...register('password', { required: 'Password is required' })}
-                  type="password" 
-                  placeholder="Please enter your password" 
-                  className="w-full border border-gray-300 rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary placeholder-gray-400"
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Phone Number or Email
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiMail className="text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="text"
+                  {...register("email", {
+                    required: "Email/Phone is required",
+                  })}
+                  className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.email ? "border-red-300" : "border-gray-300"}`}
+                  placeholder="Enter your Email or Phone"
                 />
-                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <FiLock className="text-lg" />
-                </button>
               </div>
-              {errors.password && <span className="text-red-500 text-xs mt-1">{errors.password.message}</span>}
+              {errors.email && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 rounded-sm transition-colors mt-2 text-sm uppercase"
-            >
-              {loading ? 'LOGGING IN...' : 'LOGIN'}
-            </button>
+            <div>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Password
+                </label>
+              </div>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiLock className="text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  {...register("password", {
+                    required: "Password is required",
+                  })}
+                  className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.password ? "border-red-300" : "border-gray-300"}`}
+                  placeholder="Enter your password"
+                />
+              </div>
+              {errors.password && (
+                <p className="mt-2 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="text-sm">
+              <Link
+                to="/forgot-password"
+                className="font-medium text-primary hover:text-primary-dark"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wide"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </div>
           </form>
 
-          <div className="mt-8 text-center relative">
-            <div className="absolute inset-0 flex items-center">
-               <div className="w-full border-t border-gray-200"></div>
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  New member?{" "}
+                  <Link
+                    to="/register"
+                    className="text-primary hover:text-primary-dark font-medium"
+                  >
+                    Register here
+                  </Link>
+                </span>
+              </div>
             </div>
-            <span className="bg-white px-4 text-xs text-gray-400 relative z-10">Or, login with</span>
-          </div>
 
-          <div className="flex gap-4 mt-6">
-            <button className="flex-1 flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50 py-2.5 rounded-sm transition-colors">
-              <span className="text-blue-600 font-bold text-lg">f</span>
-              <span className="text-sm text-gray-600">Facebook</span>
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50 py-2.5 rounded-sm transition-colors">
-              <span className="text-red-500 font-bold text-lg">G</span>
-              <span className="text-sm text-gray-600">Google</span>
-            </button>
+            {/* <div className="my-3">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full inline-flex gap-3 items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+              >
+                <FcGoogle className="text-2xl" />
+                <span className="text-sm">Google</span>
+              </button>
+            </div> */}
           </div>
         </div>
-
-        {/* Right Side - Empty for now to match screenshot spacing, or could have promotional content */}
-        <div className="hidden md:block flex-1 border-l border-gray-100 pl-8">
-          {/* Daraz often puts a QR code or promotional banner here, leaving it empty as per typical clean login screen if not provided */}
-        </div>
-
       </div>
     </div>
   );

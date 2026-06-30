@@ -152,19 +152,19 @@ const Navbar = () => {
             </div>
 
             <span className="text-gray-300">|</span>
-            <button onClick={() => setShowLoginModal(true)} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Login</button>
+            <button onClick={() => navigate("/login")} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Login</button>
             <span className="text-gray-300">|</span>
-            <button onClick={() => setShowSignupModal(true)} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Sign Up</button>
+            <button onClick={() => navigate("/register")} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Sign Up</button>
             <span className="text-gray-300">|</span>
 
             {/* Language Dropdown */}
             <div className="relative h-full flex items-center">
-              <span
+              {/* <span
                 onClick={() => toggleDropdown('lang')}
                 className="hover:text-gray-200 transition-colors cursor-pointer flex items-center gap-1"
               >
                 زبان تبدیل کریں
-              </span>
+              </span> */}
 
               {activeDropdown === 'lang' && (
                 <div className="absolute top-full right-0 w-[180px] bg-white rounded-sm shadow-xl z-100 text-black border border-gray-100 py-2">

@@ -22,10 +22,10 @@ const CustomerLayout = () => {
       <Navbar />
 
       <div className="container mx-auto px-4 py-6 flex-grow">
-        <div className="flex flex-col md:flex-row gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
 
           {/* Sidebar */}
-          <aside className="w-full md:w-56 flex-shrink-0 bg-white shadow-sm">
+          <aside className="w-full lg:w-56 flex-shrink-0 bg-white shadow-sm">
             {/* Hello, User */}
             <div className="px-4 py-4 border-b border-gray-100">
               <p className="text-sm text-gray-500">Hello, <span className="font-semibold text-gray-800">{user?.name}</span></p>

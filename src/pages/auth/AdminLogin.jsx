@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { FiShield, FiMail, FiLock } from 'react-icons/fi';
 import { loginUser, clearError } from '../../store/slices/authSlice';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
 
 const AdminLogin = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -37,57 +35,80 @@ const AdminLogin = () => {
       }
     }).catch(()=>{});
   };
-
+  console.log(user)
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-gray-800 p-10 rounded-2xl shadow-2xl border border-gray-700">
-        <div className="text-center flex flex-col items-center">
-          <div className="h-20 w-20 bg-red-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] mb-6 transform rotate-12 transition-transform hover:rotate-0">
-             <FiShield className="text-white text-4xl" />
-          </div>
-          <h2 className="mt-2 text-3xl font-extrabold text-white tracking-widest uppercase">
-            Admin Portal
-          </h2>
-          <p className="mt-2 text-sm text-gray-400">
-            Secure system access
-          </p>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
+        <div className="h-16 w-16 bg-primary rounded-xl flex items-center justify-center shadow-md mb-4">
+           <FiShield className="text-white text-3xl" />
         </div>
-        
-        <form className="mt-10 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-5">
-            <Input
-              id="email"
-              type="email"
-              label={<span className="text-gray-300">Admin Identifier</span>}
-              icon={<FiMail className="text-gray-500" />}
-              className="bg-gray-700 border-gray-600 text-white focus:border-red-500 focus:ring-red-500"
-              {...register('email', { 
-                required: 'Identifier is required',
-                pattern: { value: /^\S+@\S+$/i, message: 'Invalid format' }
-              })}
-              error={errors.email?.message}
-            />
-            <Input
-              id="password"
-              type="password"
-              label={<span className="text-gray-300">Passcode</span>}
-              icon={<FiLock className="text-gray-500" />}
-              className="bg-gray-700 border-gray-600 text-white focus:border-red-500 focus:ring-red-500"
-              {...register('password', { required: 'Passcode is required' })}
-              error={errors.password?.message}
-            />
-          </div>
+        <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900 tracking-wide uppercase">
+          Admin Portal
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Secure system access
+        </p>
+      </div>
+      
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-card sm:rounded-lg sm:px-10 border border-gray-100">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Admin Identifier
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiMail className="text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  {...register('email', { 
+                    required: 'Identifier is required',
+                    pattern: { value: /^\S+@\S+$/i, message: 'Invalid format' }
+                  })}
+                  className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.email ? 'border-red-300' : 'border-gray-300'}`}
+                  placeholder="Enter admin email"
+                />
+              </div>
+              {errors.email && (
+                <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+              )}
+            </div>
 
-          <Button 
-            type="submit" 
-            fullWidth 
-            isLoading={loading} 
-            size="lg" 
-            className="bg-red-600 hover:bg-red-700 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] tracking-wider"
-          >
-            AUTHORIZE
-          </Button>
-        </form>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Passcode
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiLock className="text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  {...register('password', { required: 'Passcode is required' })}
+                  className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.password ? 'border-red-300' : 'border-gray-300'}`}
+                  placeholder="Enter passcode"
+                />
+              </div>
+              {errors.password && (
+                <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider"
+              >
+                {loading ? 'AUTHORIZING...' : 'AUTHORIZE'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
