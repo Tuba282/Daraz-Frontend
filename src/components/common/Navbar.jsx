@@ -59,7 +59,7 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="w-full flex flex-col font-sans">
+    <header className="w-full flex flex-col font-sans sticky top-0 z-50 bg-white">
       {/* Top Bar */}
       <div className="bg-primary text-white text-xs px-4 hidden md:block">
         <div className="container mx-auto flex justify-end items-center h-[30px]">
@@ -238,7 +238,7 @@ const Navbar = () => {
       />
 
       {/* Main Header Bar */}
-      <div className="bg-primary text-white sticky top-0 z-50 shadow-md py-4 px-4">
+      <div className="bg-primary text-white shadow-md py-4 px-4 relative z-50">
         <div className="container mx-auto flex flex-col md:flex-row items-center gap-4 justify-start">
 
           {/* Logo & Mobile Menu */}
