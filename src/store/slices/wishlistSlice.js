@@ -19,6 +19,15 @@ export const toggleWishlistItem = createAsyncThunk('wishlist/toggle', async (pro
   }
 });
 
+export const removeFromWishlist = createAsyncThunk('wishlist/remove', async (productId, { rejectWithValue }) => {
+  try {
+    await api.delete(`/wishlist/${productId}`);
+    return { productId };
+  } catch (error) {
+    return rejectWithValue(error.response?.data?.message || 'Failed to remove from wishlist');
+  }
+});
+
 const wishlistSlice = createSlice({
   name: 'wishlist',
   initialState: {
@@ -49,6 +58,10 @@ const wishlistSlice = createSlice({
         } else {
           state.items = state.items.filter((item) => (item._id || item) !== productId);
         }
+      })
+      .addCase(removeFromWishlist.fulfilled, (state, action) => {
+        const { productId } = action.payload;
+        state.items = state.items.filter((item) => (item._id || item) !== productId);
       });
   },
 });

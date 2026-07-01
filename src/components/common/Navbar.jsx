@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../../store/slices/authSlice';
 import { selectCartItemCount } from '../../store/slices/cartSlice';
-import { FiSearch, FiShoppingCart, FiHeart, FiUser, FiChevronDown, FiLogOut, FiGrid, FiHelpCircle, FiMessageSquare, FiPackage, FiTruck, FiCreditCard, FiRefreshCcw, FiCheck } from 'react-icons/fi';
+import { FiSearch, FiShoppingCart, FiHeart, FiUser, FiChevronDown, FiChevronRight, FiLogOut, FiGrid, FiHelpCircle, FiMessageSquare, FiPackage, FiTruck, FiCreditCard, FiRefreshCcw, FiCheck } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import LoginModal from './LoginModal';
 import SignupModal from './SignupModal';
+import { categories } from '../../data/categories';
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -55,21 +56,6 @@ const Navbar = () => {
     { name: 'Cart', href: '/cart', icon: <FiShoppingCart /> },
     { name: 'Wishlist', href: '/wishlist', icon: <FiHeart /> },
     { name: 'Profile', href: '/profile', icon: <FiUser /> },
-  ];
-
-  const categoriesList = [
-    "Electronic Accessories",
-    "TV & Home Appliances",
-    "Health & Beauty",
-    "Mother & Baby",
-    "Electronic Devices",
-    "Groceries & Pets",
-    "Home & Lifestyle",
-    "Women's Fashion",
-    "Men's Fashion",
-    "Watches, Bags & Jewellery",
-    "Sports & Outdoor",
-    "Automotive & Motorbike"
   ];
 
   return (
@@ -152,19 +138,66 @@ const Navbar = () => {
             </div>
 
             <span className="text-gray-300">|</span>
-            <button onClick={() => navigate("/login")} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Login</button>
-            <span className="text-gray-300">|</span>
-            <button onClick={() => navigate("/register")} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Sign Up</button>
+            {isAuthenticated ? (
+              <div className="relative h-full flex items-center">
+                <span
+                  onClick={() => toggleDropdown('account')}
+                  className="hover:text-gray-200 cursor-pointer transition-colors font-medium flex items-center gap-1 uppercase"
+                >
+                  {user?.name ? `${user.name}'S ACCOUNT` : 'MY ACCOUNT'}
+                  <FiChevronDown className="text-sm" />
+                </span>
+
+                {activeDropdown === 'account' && (
+                  <div className="absolute top-full right-0 w-[240px] bg-white rounded-sm shadow-xl z-100 text-black border border-gray-100 py-2">
+                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white transform rotate-45 border-l border-t border-gray-100"></div>
+                    <div className="flex flex-col">
+                      <Link to="/profile" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-[13px] text-gray-600">
+                        <FiUser className="text-lg text-gray-400" /> Manage My Account
+                      </Link>
+                      <Link to="/profile/orders" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-[13px] text-gray-600">
+                        <FiPackage className="text-lg text-gray-400" /> My Orders
+                      </Link>
+                      <Link to="/wishlist" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-[13px] text-gray-600">
+                        <FiHeart className="text-lg text-gray-400" /> My Wishlist & Followed Stores
+                      </Link>
+                      <Link to="/profile/reviews" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-[13px] text-gray-600">
+                        <FiMessageSquare className="text-lg text-gray-400" /> My Reviews
+                      </Link>
+                      <Link to="/profile/returns" onClick={() => setActiveDropdown(null)} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-[13px] text-gray-600">
+                        <FiRefreshCcw className="text-lg text-gray-400" /> My Returns & Cancellations
+                      </Link>
+                      <button
+                        onClick={() => {
+                          dispatch(logoutUser());
+                          setActiveDropdown(null);
+                          toast.success('Logged out successfully');
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-[13px] text-gray-600 text-left w-full"
+                      >
+                        <FiLogOut className="text-lg text-gray-400" /> Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Login</button>
+                <span className="text-gray-300">|</span>
+                <button onClick={() => navigate('/register')} className="hover:text-gray-200 cursor-pointer transition-colors uppercase">Sign Up</button>
+              </>
+            )}
             <span className="text-gray-300">|</span>
 
             {/* Language Dropdown */}
             <div className="relative h-full flex items-center">
-              {/* <span
+              <span
                 onClick={() => toggleDropdown('lang')}
                 className="hover:text-gray-200 transition-colors cursor-pointer flex items-center gap-1"
               >
                 زبان تبدیل کریں
-              </span> */}
+              </span>
 
               {activeDropdown === 'lang' && (
                 <div className="absolute top-full right-0 w-[180px] bg-white rounded-sm shadow-xl z-100 text-black border border-gray-100 py-2">
@@ -207,8 +240,9 @@ const Navbar = () => {
       {/* Main Header Bar */}
       <div className="bg-primary text-white sticky top-0 z-50 shadow-md py-4 px-4">
         <div className="container mx-auto flex flex-col md:flex-row items-center gap-4 justify-start">
+
           {/* Logo & Mobile Menu */}
-          <div className="flex items-center  justify-start w-full md:w-[300px]">
+          <div className="flex items-center  justify-end w-full md:w-[300px]">
             {/* Logo */}
             <Link to="/" className="text-3xl font-extrabold tracking-tight flex items-center">
               <img src="/logp.png" alt="Daraz" className="h-8 mr-2" />
@@ -229,7 +263,7 @@ const Navbar = () => {
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="flex flex-1 max-w-2xl w-full">
+          <form onSubmit={handleSearch} className="flex  max-w-2xl w-full">
             <div className="relative flex-grow flex items-center rounded-[4px] bg-white overflow-hidden shadow-inner">
               <input
                 type="text"
@@ -264,7 +298,7 @@ const Navbar = () => {
             {/* Auth Dropdown */}
             {isAuthenticated ? (
               <div className="relative">
-                <button
+                {/* <button
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
                   onBlur={() => setTimeout(() => setShowUserDropdown(false), 200)}
                   className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-3.5 py-1.5 rounded-full transition-colors font-medium text-sm focus:outline-none"
@@ -272,7 +306,7 @@ const Navbar = () => {
                   <FiUser className="text-base" />
                   <span className="max-w-[120px] truncate">{user?.name}</span>
                   <FiChevronDown className={`transition-transform duration-300 ${showUserDropdown ? 'rotate-180' : ''}`} />
-                </button>
+                </button> */}
                 {/* Dropdown Menu */}
                 {showUserDropdown && (
                   <div className="absolute right-0 mt-2.5 w-56 bg-white rounded-lg shadow-dropdown border border-gray-100 py-2 text-gray-800 animate-slide-down z-50">
@@ -315,38 +349,57 @@ const Navbar = () => {
       </div>
 
       {/* Categories Bar */}
-      <div className="bg-white border-b border-gray-200 hidden md:block">
+      <div className="bg-white border-b border-gray-200 hidden md:block relative z-40">
         <div className="container mx-auto px-4">
-          <div 
+          <div
             className="relative w-fit"
             onMouseEnter={() => setShowCategories(true)}
             onMouseLeave={() => setShowCategories(false)}
           >
-            <button className="flex items-center gap-2 py-2 text-sm text-gray-700 hover:text-primary font-medium focus:outline-none">
-              Categories <FiChevronDown className={`transition-transform duration-200 ${showCategories ? 'rotate-180' : ''}`} />
+            <button className={`flex items-center gap-2 py-3 text-sm font-medium focus:outline-none transition-colors ${showCategories ? 'text-[#f85606]' : 'text-gray-700 hover:text-[#f85606]'}`}>
+              Categories <FiChevronDown className={`transition-transform duration-200 ${showCategories ? 'rotate-180 text-[#f85606]' : ''}`} />
             </button>
-            
-            {/* Dropdown List */}
+
+            {/* Professional Nested Dropdown List */}
             {showCategories && (
-              <div className="absolute top-full left-0 w-64 bg-white shadow-xl border border-gray-100 z-50 py-2 rounded-b-sm animate-fade-in">
-                <ul className="flex flex-col">
-                  {categoriesList.map((cat, idx) => (
-                    <li key={idx}>
-                      <Link 
-                        to={`/search?q=${encodeURIComponent(cat)}`}
-                        className="block px-4 py-2 text-[13px] text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors"
-                      >
-                        {cat}
-                      </Link>
+              <div className="absolute top-full left-0 flex shadow-[0_4px_12px_rgba(0,0,0,0.1)] bg-white border border-gray-100/50 rounded-b-sm animate-fade-in text-[13px]">
+                {/* Left Pane: Categories */}
+                <ul className="w-[240px] py-2 flex flex-col bg-gray-50/30">
+                  {categories.map((cat) => (
+                    <li
+                      key={cat.id}
+                      onMouseEnter={() => setActiveDropdown(cat.id)}
+                      className={`px-4 py-1.5 flex items-center justify-between cursor-pointer transition-colors ${activeDropdown === cat.id ? 'bg-gray-100 text-[#f85606]' : 'text-gray-600 hover:bg-gray-100 hover:text-[#f85606]'
+                        }`}
+                    >
+                      <span>{cat.name}</span>
+                      {activeDropdown === cat.id && <FiChevronRight className="text-[#f85606] text-sm" />}
                     </li>
                   ))}
                 </ul>
+
+                {/* Right Pane: Subcategories */}
+                {activeDropdown && (
+                  <div className="w-[280px] min-h-[380px] bg-white border-l border-gray-100 p-4 shadow-[4px_4px_12px_rgba(0,0,0,0.05)]">
+                    <div className="flex flex-col gap-1">
+                      {categories.find(c => c.id === activeDropdown)?.subcategories.flatMap(sub => sub.items).map((item, idx) => (
+                        <Link
+                          key={idx}
+                          to={`/search?q=${encodeURIComponent(item)}`}
+                          className="px-2 py-1.5 text-gray-500 hover:text-[#f85606] transition-colors hover:bg-gray-50/50 rounded-sm"
+                        >
+                          {item}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
-    </header>
+    </header >
   );
 };
 

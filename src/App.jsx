@@ -29,14 +29,18 @@ import UpdatePassword from "./pages/auth/UpdatePassword";
 import HelpCenter from "./pages/public/HelpCenter";
 import Faq from "./pages/public/Faq";
 import ContactCustomerCare from "./pages/public/ContactCustomerCare";
+import CategoryPage from "./pages/public/CategoryPage";
 import HelpCenterOrder from "./pages/public/HelpCenterOrder";
 import ManageAccount from "./pages/customer/ManageAccount";
 import MyOrders from "./pages/customer/MyOrders";
 import OrderDetails from "./pages/customer/OrderDetails";
+import Checkout from "./pages/customer/Checkout";
 import Cart from "./pages/customer/Cart";
 import CheckoutPayment from "./pages/customer/CheckoutPayment";
+import MyReturns from "./pages/customer/MyReturns";
 import ProductDetails from "./pages/public/ProductDetails";
-
+import Wishlist from "./pages/customer/Wishlist";
+import MyCancellations from "./pages/customer/MyCancellations";
 
 const NotFound = () => (
   <div className="p-8 text-center">
@@ -69,8 +73,10 @@ function App() {
         {/* Public Routes */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/category/:id" element={<CategoryPage />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/payment" element={<CheckoutPayment />} />
 
           {/* Auth Routes (Guest Only) */}
@@ -97,6 +103,7 @@ function App() {
           <Route element={<CustomerLayout />}>
             <Route path="/profile" element={<ManageAccount />} />
             <Route path="/profile/orders" element={<MyOrders />} />
+            <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/profile/order/:id" element={<OrderDetails />} />
             <Route
               path="/profile/addresses"
@@ -122,24 +129,17 @@ function App() {
                 </div>
               }
             />
-            <Route
-              path="/profile/returns"
-              element={
-                <div className="p-6 text-gray-500">My Returns (Coming Soon)</div>
-              }
-            />
+            <Route path="/profile/returns" element={<MyReturns />} />
             <Route
               path="/profile/cancellations"
-              element={
-                <div className="p-6 text-gray-500">
-                  My Cancellations (Coming Soon)
-                </div>
-              }
+              element={<MyCancellations />}
             />
             <Route
               path="/profile/reviews"
               element={
-                <div className="p-6 text-gray-500">My Reviews (Coming Soon)</div>
+                <div className="p-6 text-gray-500">
+                  My Reviews (Coming Soon)
+                </div>
               }
             />
           </Route>
@@ -148,7 +148,10 @@ function App() {
         {/* Vendor Routes */}
         <Route element={<RoleRoute allowedRoles={["vendor"]} />}>
           <Route element={<VendorLayout />}>
-            <Route path="/vendor" element={<div>Vendor Dashboard (TODO)</div>} />
+            <Route
+              path="/vendor"
+              element={<div>Vendor Dashboard (TODO)</div>}
+            />
           </Route>
         </Route>
 

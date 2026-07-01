@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FiInfo } from 'react-icons/fi';
-import { selectCartItems, selectCartTotal } from '../../store/slices/cartSlice';
+import { selectCartItems, selectCartTotal, clearCart } from '../../store/slices/cartSlice';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -91,6 +91,7 @@ const CheckoutPayment = () => {
         platformFee,
       };
       const { data } = await api.post('/orders', payload);
+      await dispatch(clearCart()).unwrap();
       toast.success('Order placed successfully!');
       navigate(`/profile/order/${data.order._id}`);
     } catch (err) {
@@ -160,9 +161,9 @@ const CheckoutPayment = () => {
           <div className="p-6 space-y-4 text-sm text-gray-700">
             {/* Card logos */}
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-7 bg-gradient-to-r from-red-500 to-yellow-400 rounded-sm flex items-center justify-center text-[8px] text-white font-bold">MC</div>
-              <div className="w-10 h-7 bg-blue-700 rounded-sm flex items-center justify-center text-[8px] text-white font-bold italic">VISA</div>
-              <div className="w-10 h-7 bg-blue-900 rounded-sm flex items-center justify-center text-[8px] text-white font-bold">UP</div>
+              <img src="/others/master.png" alt="Mastercard" className="w-7 h-7 object-contain" />
+              <img src="/others/visa.png" alt="Visa" className="w-7 h-7 object-contain" />
+              <img src="/others/union.png" alt="UnionPay" className="w-7 h-7 object-contain" />
             </div>
             <div>
               <label className="block text-xs text-red-500 mb-1">* Card number</label>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FiChevronRight, FiShare2, FiHeart, FiMinus, FiPlus, FiMessageSquare, FiMapPin, FiTruck, FiShield, FiStar, FiThumbsUp, FiInfo, FiCheck, FiRefreshCcw } from 'react-icons/fi';
-import { useDispatch } from 'react-redux';
+import { FiChevronRight, FiShare2, FiHeart, FiMinus, FiPlus, FiMessageSquare, FiMapPin, FiTruck, FiShield, FiThumbsUp, FiInfo, FiCheck, FiRefreshCcw } from 'react-icons/fi';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../store/slices/cartSlice';
+import { toggleWishlistItem, selectIsInWishlist } from '../../store/slices/wishlistSlice';
 import toast from 'react-hot-toast';
+import { generateProduct, productList } from '../../data/products';
+import ProductCard from '../../components/product/ProductCard';
+import { getDynamicDescription } from '../../utils/productDescriptions';
 
-// Helper to generate stars
 const renderStars = (rating) => {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
@@ -22,129 +25,53 @@ const ProductDetails = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
 
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const product = generateProduct(id || 'product');
+  
+  // Make the related products dynamic based on the current product ID
+  const idValue = String(product.id || product._id || '1').replace(/\D/g, '');
+  const seedNum = idValue ? parseInt(idValue, 10) : 1;
+  const filteredList = productList.filter(p => String(p.id) !== String(product.id) && String(p.slug) !== String(product.slug));
+  const offset = seedNum % Math.max(1, filteredList.length - 6);
+  
+  const relatedProducts = filteredList
+    .slice(offset, offset + 6)
+    .map(p => generateProduct(p.id));
+    
+  const productId = product._id || product.id;
+  const isRealProduct = typeof productId === 'string' && productId.length === 24;
+  const isWishlisted = useSelector((state) => selectIsInWishlist(state, productId));
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to add to wishlist');
+      return;
+    }
+    if (!isRealProduct) {
+      toast.error('Only real database products can be wishlisted');
+      return;
+    }
+    try {
+      const res = await dispatch(toggleWishlistItem(productId)).unwrap();
+      toast.success(res.inWishlist ? 'Added to wishlist!' : 'Removed from wishlist');
+    } catch {
+      toast.error('Failed to update wishlist');
+    }
+  };
+
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedQuality, setSelectedQuality] = useState(null);
   const [showMoreSpecs, setShowMoreSpecs] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
   const navigate = useNavigate();
 
-  // Format the slug into a readable title
-  const formatTitle = (slug) => {
-    if (!slug || slug === '123') return 'Candy - The Italian Style by Haier 0.8 Ton Heat and Cool DC Inverter';
-    return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  };
+  useEffect(() => {
+    setSelectedColor(product.selectedColor || product.colors?.[0]);
+    setSelectedQuality(product.selectedQuality || product.qualities?.[0]);
+  }, [id, product.selectedColor, product.selectedQuality]);
 
-  // Generate dynamic data based on the ID (slug)
-  const generateDynamicProduct = (slugId) => {
-    const isAC = slugId === '123' || slugId.includes('inverter') || slugId.includes('haier');
-    const title = formatTitle(slugId);
-    
-    // Hash function to get deterministic but varied prices/ratings based on slug
-    const hash = slugId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const price = 500 + (hash * 13 % 15000); // Random price between 500 and 15500
-    const discount = (hash % 40) + 5; // 5% to 45% discount
-    const originalPrice = Math.round(price * (1 + discount / 100));
-    
-    // Dynamic image assignment based on keywords in title
-    let mainImages = [
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800', // Headphones
-      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800', // Watch
-      'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&q=80&w=800', // Camera
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800', // Shoes
-    ];
-    
-    if (title.toLowerCase().includes('watch')) mainImages = ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800', 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&q=80&w=800'];
-    else if (title.toLowerCase().includes('shoe') || title.toLowerCase().includes('footwear')) mainImages = ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800'];
-    else if (title.toLowerCase().includes('shirt') || title.toLowerCase().includes('cotton')) mainImages = ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800'];
-    else if (title.toLowerCase().includes('cat') || title.toLowerCase().includes('dog')) mainImages = ['https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&q=80&w=800'];
-
-    if (isAC) {
-       return {
-          id: slugId,
-          title: 'Candy - The Italian Style by Haier 0.8 Ton Heat and Cool DC Inverter - CSU-10HF - High Efficiency Inverter - Energy Saving - Eco-Environment - 10 Years Brand Warranty - Free Professional Installation By Haier',
-          brand: 'Candy',
-          category: 'Home Appliances',
-          subCategory: 'Cooling & Heating',
-          rating: 4.8,
-          reviewsCount: 299,
-          price: 77799,
-          originalPrice: 89187,
-          discount: 13,
-          images: [
-            'https://images.unsplash.com/photo-1527628217451-b2414a1ee733?auto=format&fit=crop&q=80&w=800',
-            'https://images.unsplash.com/photo-1620601429949-c12e2df74737?auto=format&fit=crop&q=80&w=800',
-            'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=800',
-            'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800',
-          ],
-          seller: { name: 'Haier', rating: '93%', shippingPerformance: '94%' },
-          specs: {
-            'Brand Warranty': '10 Years Compressor Warranty', 'PCB Warranty': '5 Years PCB Warranty', 'Evaporator Warranty': '5 Years Evaporator Warranty',
-            'BTU': '10,000', 'Current (A)': '1.5 ~ 5.5', 'Power (KW)': '0.3 ~ 1.15', 'Voltage': '150-242', 'Refrigerant': 'R-32',
-            'Heat and Cool': 'Yes', 'Self Clean': 'Yes', 'Eco Mode': 'Yes', 'Anti Rust': 'Yes',
-          },
-          reviews: [
-            { id: 1, user: 'Noman Hafeez', rating: 5, date: '4 weeks ago', verified: true, comment: 'Cooling Power: Good cooling\nEnergy Efficiency: very efficient\nNoise Level: no noise\n\narrived safely', images: ['https://images.unsplash.com/photo-1527628217451-b2414a1ee733?auto=format&fit=crop&q=80&w=200'], sellerResponse: 'Dear valued customer, thank you for choosing Haier.', responseDate: '2 weeks ago', colorFamily: 'White' },
-            { id: 2, user: 'Khurram Saeed', rating: 5, date: '4 weeks ago', verified: true, comment: 'It is my 2nd purchase of the same ac. Works properly and cooling effectively.', images: ['https://images.unsplash.com/photo-1620601429949-c12e2df74737?auto=format&fit=crop&q=80&w=200'], sellerResponse: 'Dear valued customer, thank you for choosing Haier.', responseDate: '3 weeks ago', colorFamily: 'White' }
-          ]
-       };
-    }
-
-    return {
-      id: slugId,
-      title: title,
-      brand: 'Generic Brand',
-      category: 'General',
-      subCategory: 'Accessories',
-      rating: ((hash % 20) / 10) + 3, // Rating between 3.0 and 5.0
-      reviewsCount: hash % 500,
-      price: price,
-      originalPrice: originalPrice,
-      discount: discount,
-      images: [
-        mainImages[0 % mainImages.length],
-        mainImages[(1) % mainImages.length] || mainImages[0],
-        'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800' // fallback remote
-      ],
-      seller: {
-        name: 'Daraz Store',
-        rating: `${(hash % 15) + 85}%`,
-        shippingPerformance: `${(hash % 10) + 90}%`,
-      },
-      specs: {
-        'Brand': 'Generic Brand',
-        'Material': 'High Quality',
-        'Condition': 'New',
-        'Warranty': '1 Year Local Warranty',
-        'Return Policy': '14 Days Easy Return'
-      },
-      reviews: [
-        {
-          id: 1,
-          user: 'Ali Khan',
-          rating: 5,
-          date: '1 week ago',
-          verified: true,
-          comment: `Great product! Really satisfied with ${title}. Packaging was good.`,
-          sellerResponse: 'Thank you for your valuable feedback!',
-          responseDate: '5 days ago',
-          colorFamily: 'Standard'
-        },
-        {
-          id: 2,
-          user: 'Sara Ahmed',
-          rating: 4,
-          date: '2 weeks ago',
-          verified: true,
-          comment: 'Good quality for the price. Delivery was slightly delayed but the product is fine.',
-          sellerResponse: 'We apologize for the delay. Glad you liked the product.',
-          responseDate: '1 week ago',
-          colorFamily: 'Standard'
-        }
-      ]
-    };
-  };
-
-  const product = generateDynamicProduct(id);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -160,12 +87,21 @@ const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
+    // Optionally add to cart, but usually buy now takes directly to checkout
     dispatch(addToCart({ 
       productId: product.id, 
       quantity: qty, 
-      product: { ...product, price: product.price } 
+      product: { ...product, price: product.salePrice || product.price } 
     }));
-    navigate('/cart');
+    
+    const checkoutItem = {
+      _id: 'buy-now-' + Date.now(),
+      productId: product.id,
+      quantity: qty,
+      product: { ...product, price: product.salePrice || product.price }
+    };
+    
+    navigate('/checkout', { state: { checkoutItems: [checkoutItem] } });
   };
 
   return (
@@ -227,6 +163,10 @@ const ProductDetails = () => {
 
             {/* Product Info */}
             <div className="flex-1 md:px-6 mt-4 md:mt-0">
+              <div className="flex items-center gap-2 mb-2">
+                {product.isFlashSale && <span className="bg-[#f85606] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Flash Sale</span>}
+                <span className="bg-purple-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">Daraz Mall</span>
+              </div>
               <h1 className="text-[22px] leading-tight text-gray-800 font-medium mb-3">{product.title}</h1>
               
               <div className="flex items-center justify-between mb-4">
@@ -240,7 +180,13 @@ const ProductDetails = () => {
                 </div>
                 <div className="flex items-center gap-4 text-gray-400 text-xl">
                   <FiShare2 className="cursor-pointer hover:text-gray-600" />
-                  <FiHeart className="cursor-pointer hover:text-gray-600" />
+                  <button onClick={handleWishlistToggle} className="focus:outline-none">
+                    <FiHeart
+                      className={`cursor-pointer transition-colors ${
+                        isWishlisted ? 'fill-red-500 text-red-500' : 'hover:text-red-400'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -248,23 +194,68 @@ const ProductDetails = () => {
                 Brand: <Link to="/" className="text-blue-600 hover:underline">{product.brand}</Link> | <Link to="/" className="text-blue-600 hover:underline">More {product.subCategory} from {product.brand}</Link>
               </div>
 
-              <div className="mb-6 py-4 border-y border-gray-100">
-                <div className="text-3xl text-primary font-semibold mb-1">Rs. {product.price.toLocaleString()}</div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400 line-through">Rs. {product.originalPrice.toLocaleString()}</span>
-                  <span className="text-sm text-gray-800 font-medium">-{product.discount}%</span>
+              {/* Price Section (Flash Sale Styling) */}
+              <div className="mb-6 rounded-sm overflow-hidden">
+                <div className="bg-gradient-to-r from-[#f85606] to-[#ff7d40] text-white flex justify-between items-center px-4 py-3">
+                   <div className="flex items-end gap-3">
+                     <span className="text-3xl font-semibold leading-none">Rs. {product.salePrice.toLocaleString()}</span>
+                     <div className="flex flex-col">
+                       <span className="text-sm line-through opacity-80 leading-none mb-1">Rs. {product.price.toLocaleString()}</span>
+                       <span className="text-xs font-semibold leading-none">-{product.discount}%</span>
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <div className="text-xs uppercase font-medium opacity-90 mb-1">Flash Sale ending in</div>
+                     <div className="flex items-center gap-1 text-sm font-bold">
+                       <span className="bg-white text-[#f85606] px-1.5 py-0.5 rounded-sm">11</span>
+                       <span>:</span>
+                       <span className="bg-white text-[#f85606] px-1.5 py-0.5 rounded-sm">45</span>
+                       <span>:</span>
+                       <span className="bg-white text-[#f85606] px-1.5 py-0.5 rounded-sm">59</span>
+                     </div>
+                   </div>
                 </div>
               </div>
 
-              {/* Color Family */}
+              {/* Promotions */}
+              <div className="flex items-start gap-4 mb-6">
+                <span className="text-sm text-gray-500 w-16">Promotions</span>
+                <div className="flex-1 flex gap-2">
+                  <span className="border border-[#f85606] text-[#f85606] bg-orange-50 text-[11px] font-medium px-2 py-1 rounded-sm">Min. Spend Rs. 4,999 Capped at Rs. 200</span>
+                </div>
+              </div>
+
+              <div className="mb-4 text-sm text-gray-600 border-t border-gray-100 pt-4">{product.description}</div>
+
               <div className="mb-6">
                 <span className="text-sm text-gray-500 mr-4">Color Family</span>
-                <span className="text-sm font-medium text-gray-800">White</span>
-                <div className="flex gap-2 mt-2">
-                  <div className="border border-primary px-2 py-1 text-sm cursor-pointer relative">
-                    White
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-primary transform translate-x-1/2 translate-y-1/2 rotate-45 border-t border-l border-white"></div>
-                  </div>
+                <span className="text-sm font-medium text-gray-800">{selectedColor?.name || 'Standard'}</span>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {(product.colors || []).map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setSelectedColor(color)}
+                      className={`flex items-center gap-2 border px-3 py-2 text-sm rounded-sm ${selectedColor?.name === color.name ? 'border-primary bg-orange-50' : 'border-gray-200'}`}
+                    >
+                      <span className="w-4 h-4 rounded-full border" style={{ backgroundColor: color.hex, borderColor: color.border }} />
+                      {color.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <span className="text-sm text-gray-500 mr-4">Quality</span>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {(product.qualities || []).map((quality) => (
+                    <button
+                      key={quality}
+                      onClick={() => setSelectedQuality(quality)}
+                      className={`border px-3 py-2 text-sm rounded-sm ${selectedQuality === quality ? 'border-primary bg-orange-50 text-primary' : 'border-gray-200 text-gray-700'}`}
+                    >
+                      {quality}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -405,21 +396,166 @@ const ProductDetails = () => {
           </div>
         </div>
 
+
         {/* Product Details Section */}
         <div className="bg-white mt-4 shadow-sm p-6">
-          <h2 className="text-lg font-medium bg-gray-50 px-4 py-3 border border-gray-100 text-gray-800 mb-4">Product details of</h2>
+          <h2 className="text-lg font-medium bg-gray-50 px-4 py-3 border border-gray-100 text-gray-800 mb-4">Product details of {product.title}</h2>
           
-          <div className={`overflow-hidden transition-all duration-300 ${showMoreSpecs ? 'max-h-[5000px]' : 'max-h-[600px]'}`}>
-            <div className="text-sm text-gray-700 leading-relaxed mb-6 font-medium whitespace-pre-line px-4">
-              {Object.entries(product.specs).map(([key, val]) => (
-                <div key={key}>{key === val ? val : `${key}: ${val}`}</div>
-              ))}
+          <div className={`relative overflow-hidden transition-all duration-500 ${showMoreSpecs ? 'max-h-[5000px]' : 'max-h-[450px]'}`}>
+            <div className="mb-6 px-4 mt-2">
+              {getDynamicDescription(product)}
             </div>
 
-            {/* Huge promotional image matching the screenshot */}
-            <div className="w-full mb-6">
-              <img src="https://images.unsplash.com/photo-1594818379496-da1e345b0dee?auto=format&fit=crop&q=80&w=1600" alt="Anti Corrosion Spec" className="w-full h-auto" />
+            <div className="text-sm text-gray-600 leading-loose mb-6 px-4 space-y-8">
+              <hr className="border-gray-200" />
+
+              {/* Technical Specifications */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Technical Specifications</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse border border-gray-200 text-sm">
+                    <tbody>
+                      {[
+                        ['Product Type', 'True Wireless Stereo (TWS) Bluetooth Earbuds'],
+                        ['Bluetooth Version', 'Bluetooth 5.3'],
+                        ['Bluetooth Profiles', 'HFP, HSP, A2DP, AVRCP'],
+                        ['Wireless Range', 'Up to 10 meters (33 feet)'],
+                        ['Driver Size', '10mm Dynamic Drivers'],
+                        ['Frequency Response', '20Hz – 20kHz'],
+                        ['Audio Quality', 'Hi-Fi Stereo Sound'],
+                        ['Microphone', 'Dual HD Microphones'],
+                        ['Noise Cancellation', 'ENC (Environmental Noise Cancellation)'],
+                        ['Touch Controls', 'Yes'],
+                        ['Voice Assistant Support', 'Google Assistant & Siri'],
+                        ['Gaming Mode', 'Yes'],
+                        ['Auto Pairing', 'Yes'],
+                        ['Auto Power On/Off', 'Yes'],
+                        ['Water Resistance', 'IPX5'],
+                        ['Earbud Battery', '40mAh × 2'],
+                        ['Charging Case Battery', '300mAh'],
+                        ['Music Playback', 'Up to 6 Hours'],
+                        ['Talk Time', 'Up to 5 Hours'],
+                        ['Total Battery Backup', 'Up to 30 Hours (with Charging Case)'],
+                        ['Charging Time', '1.5–2 Hours'],
+                        ['Charging Interface', 'USB Type-C'],
+                        ['Standby Time', 'Up to 120 Hours'],
+                        ['Material', 'Premium ABS Plastic + Silicone Ear Tips'],
+                        ['Weight', 'Approximately 45g (Including Charging Case)'],
+                        ['Available Colors', 'Black, White, Blue, Pink'],
+                      ].map(([key, val], idx) => (
+                        <tr key={idx} className="border-b border-gray-200">
+                          <td className="bg-gray-50 py-2 px-4 font-medium text-gray-700 w-1/3">{key}</td>
+                          <td className="py-2 px-4 text-gray-600">{val}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <hr className="border-gray-200" />
+
+              {/* Premium Audio Performance */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Premium Audio Performance</h3>
+                <p>Enjoy immersive stereo sound with deep bass, crisp vocals, and clear treble. The advanced dynamic drivers produce rich, balanced audio for music, movies, podcasts, and phone calls.</p>
+              </section>
+
+              {/* Crystal Clear Calling */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Crystal Clear Calling</h3>
+                <p>Dual HD microphones combined with Environmental Noise Cancellation reduce surrounding noise, allowing your voice to remain clear during calls, video conferences, and online meetings.</p>
+              </section>
+
+              {/* Smart Touch Control */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Smart Touch Control</h3>
+                <p className="mb-2">Control your <strong>{product.title}</strong> effortlessly with simple touch gestures:</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Play/Pause Music</li>
+                  <li>Answer or End Calls</li>
+                  <li>Reject Incoming Calls</li>
+                  <li>Next/Previous Track</li>
+                  <li>Volume Control</li>
+                  <li>Activate Google Assistant or Siri</li>
+                </ul>
+              </section>
+
+              <hr className="border-gray-200" />
+
+              {/* Comfortable Ergonomic Design */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Comfortable Ergonomic Design</h3>
+                <p>Designed for extended wear, the lightweight body fits securely without causing discomfort. Multiple sizes of silicone tips ensure a customized fit for every user.</p>
+              </section>
+
+              {/* Long Battery Life */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Long Battery Life</h3>
+                <p>The <strong>{product.title}</strong> provides up to <strong>6 hours</strong> of continuous playback on a single charge. The portable charging case offers multiple additional charges, extending total listening time to <strong>30 hours</strong>, making them ideal for travel and daily use.</p>
+              </section>
+
+              {/* Universal Compatibility */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Universal Compatibility</h3>
+                <p className="mb-2">Compatible with:</p>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>Android Smartphones</li>
+                  <li>Apple iPhone & iPad</li>
+                  <li>Windows PCs & Laptops</li>
+                  <li>MacBook</li>
+                  <li>Tablets</li>
+                  <li>Smart TVs</li>
+                  <li>Bluetooth-enabled Gaming Devices</li>
+                </ul>
+              </section>
+
+              <hr className="border-gray-200" />
+
+              {/* Package Contents */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Package Contents</h3>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>1 × Pair of <strong>{product.title}</strong></li>
+                  <li>1 × Portable Charging Case</li>
+                  <li>1 × USB Type-C Charging Cable</li>
+                  <li>3 Pairs of Silicone Ear Tips (Small, Medium, Large)</li>
+                  <li>1 × User Manual</li>
+                  <li>1 × Warranty Card</li>
+                </ul>
+              </section>
+
+              {/* Ideal For */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Ideal For</h3>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {['Music Lovers', 'Students', 'Office Professionals', 'Online Meetings', 'Gaming', 'Running', 'Gym Workouts', 'Cycling', 'Traveling', 'Daily Entertainment'].map((tag, i) => (
+                    <span key={i} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">{tag}</span>
+                  ))}
+                </div>
+              </section>
+
+              {/* Warranty */}
+              <section>
+                <h3 className="text-xl font-semibold mb-3 text-gray-800">Warranty</h3>
+                <ul className="list-disc pl-6 space-y-1">
+                  <li>6 Months Limited Warranty</li>
+                  <li>Customer Support Available</li>
+                  <li>Quality Tested Before Dispatch</li>
+                </ul>
+              </section>
+
             </div>
+
+            {/* Product image instead of the promotional banner */}
+            <div className="w-full mb-6">
+              <img src={product.images[0]} alt="Promotional Banner" className="w-full h-auto rounded-sm object-cover max-h-[800px]" />
+            </div>
+
+            {/* Fade-out Gradient when folded */}
+            {!showMoreSpecs && (
+              <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none"></div>
+            )}
           </div>
 
           <div className="text-center mt-4 border-t border-gray-100 pt-4">
@@ -441,27 +577,31 @@ const ProductDetails = () => {
           <div className="flex flex-col md:flex-row gap-10 mb-8 px-4">
             <div className="flex flex-col">
                <div className="flex items-end gap-1">
-                 <span className="text-5xl font-light text-gray-800">4.8</span>
+                 <span className="text-5xl font-light text-gray-800">{product.rating.toFixed(1)}</span>
                  <span className="text-2xl text-gray-400 mb-1">/5</span>
                </div>
                <div className="flex text-[#f5a623] text-3xl my-2">
-                  ★★★★★
+                  {renderStars(Math.round(product.rating))}
                </div>
                <p className="text-sm text-gray-400">{product.reviewsCount} Ratings</p>
             </div>
 
             <div className="flex-1 max-w-sm flex flex-col gap-1 justify-center">
-               {[5,4,3,2,1].map(num => (
-                 <div key={num} className="flex items-center gap-2">
-                   <div className="flex text-[#f5a623] text-sm w-20">
-                     {renderStars(num)}
+               {[5,4,3,2,1].map(num => {
+                 const count = product.reviews.filter((review) => review.rating === num).length;
+                 const width = product.reviewsCount ? `${Math.max(8, (count / product.reviewsCount) * 100)}%` : '0%';
+                 return (
+                   <div key={num} className="flex items-center gap-2">
+                     <div className="flex text-[#f5a623] text-sm w-20">
+                       {renderStars(num)}
+                     </div>
+                     <div className="flex-1 h-3 bg-gray-200 rounded-sm overflow-hidden">
+                        <div className="h-full bg-[#f5a623]" style={{ width }}></div>
+                     </div>
+                     <span className="text-xs text-gray-500 w-8">{count}</span>
                    </div>
-                   <div className="flex-1 h-3 bg-gray-200 rounded-sm overflow-hidden">
-                      <div className="h-full bg-[#f5a623]" style={{ width: num === 5 ? '80%' : num === 4 ? '10%' : num===3 ? '5%' : '0%' }}></div>
-                   </div>
-                   <span className="text-xs text-gray-500 w-8">{num === 5 ? 272 : num === 4 ? 9 : num === 3 ? 3 : num === 2 ? 6 : 9}</span>
-                 </div>
-               ))}
+                 );
+               })}
             </div>
           </div>
 
@@ -528,6 +668,16 @@ const ProductDetails = () => {
                <button className="w-8 h-8 flex items-center justify-center border border-gray-300 text-gray-600 hover:bg-gray-50">61</button>
                <button className="w-8 h-8 flex items-center justify-center border border-gray-300 text-gray-600 hover:bg-gray-50">&gt;</button>
              </div>
+          </div>
+        </div>
+
+        {/* Related Products Section */}
+        <div className="mt-8 mb-4 px-4 sm:px-0">
+          <h2 className="text-xl font-medium text-gray-800 mb-4 px-2">Related Products</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {relatedProducts.map((rp) => (
+              <ProductCard key={rp.id} product={rp} />
+            ))}
           </div>
         </div>
 

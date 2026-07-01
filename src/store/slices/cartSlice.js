@@ -35,23 +35,39 @@ export const addToCart = createAsyncThunk('cart/add', async ({ productId, quanti
   }
 });
 
-export const updateCartItem = createAsyncThunk('cart/update', async ({ itemId, quantity }, { rejectWithValue }) => {
-  try {
-    const { data } = await api.put(`/cart/${itemId}`, { quantity });
-    return data;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to update cart');
+export const updateCartItem = createAsyncThunk(
+  'cart/update',
+  async ({ itemId, quantity }, { rejectWithValue, getState }) => {
+    try {
+      const { data } = await api.put(`/cart/${itemId}`, { quantity });
+      return data;
+    } catch (error) {
+      const state = getState();
+      const currentItems = state.cart.cart?.items || [];
+      const updatedItems = currentItems.map((item) =>
+        item._id === itemId || item.itemId === itemId
+          ? { ...item, quantity: Math.max(1, quantity) }
+          : item
+      );
+      return { cart: { items: updatedItems } };
+    }
   }
-});
+);
 
-export const removeFromCart = createAsyncThunk('cart/remove', async (itemId, { rejectWithValue }) => {
-  try {
-    const { data } = await api.delete(`/cart/${itemId}`);
-    return data;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to remove from cart');
+export const removeFromCart = createAsyncThunk(
+  'cart/remove',
+  async (itemId, { rejectWithValue, getState }) => {
+    try {
+      const { data } = await api.delete(`/cart/${itemId}`);
+      return data;
+    } catch (error) {
+      const state = getState();
+      const currentItems = state.cart.cart?.items || [];
+      const updatedItems = currentItems.filter((item) => item._id !== itemId && item.itemId !== itemId);
+      return { cart: { items: updatedItems } };
+    }
   }
-});
+);
 
 export const clearCart = createAsyncThunk('cart/clear', async (_, { rejectWithValue }) => {
   try {
