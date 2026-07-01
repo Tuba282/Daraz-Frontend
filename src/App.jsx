@@ -79,6 +79,8 @@ function App() {
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/category/:id" element={<CategoryPage />} />
+          <Route path="/products" element={<CategoryPage />} />
+          <Route path="/flash-sale" element={<CategoryPage />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
