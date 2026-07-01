@@ -1,15 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FiLock, FiMail } from "react-icons/fi";
 import {
   loginUser,
   googleLogin,
   clearError,
 } from "../../store/slices/authSlice";
 import { FcGoogle } from "react-icons/fc";
+import {
+  FiUser,
+  FiMail,
+  FiLock,
+  FiPhone,
+  FiEye,
+  FiEyeOff,
+} from "react-icons/fi";
 
 const CustomerLogin = () => {
   const {
@@ -22,9 +29,12 @@ const CustomerLogin = () => {
   const { loading, error, isAuthenticated, user } = useSelector(
     (state) => state.auth,
   );
+  const [showPassword, setShowPassword] = useState(false); // toggle password visibility
 
   useEffect(() => {
     if (isAuthenticated && user?.role === "customer") {
+      navigate("/");
+    } else if (isAuthenticated && user?.role === "vendor") {
       navigate("/");
     } else if (isAuthenticated) {
       toast.error("Please logout first to login as customer");
@@ -40,10 +50,10 @@ const CustomerLogin = () => {
     dispatch(loginUser(data))
       .unwrap()
       .then((res) => {
-        if (res.user.role !== "customer") {
-          toast.error("Invalid customer credentials");
+        if (res.user.role !== "customer" && res.user.role !== "vendor") {
+          toast.error("Invalid credentials");
         } else {
-          toast.success("Welcome back!");
+          toast.success(`Welcome back, ${res.user.role}!`);
           navigate("/");
         }
       })
@@ -117,13 +127,25 @@ const CustomerLogin = () => {
                 </div>
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...register("password", {
                     required: "Password is required",
                   })}
-                  className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.password ? "border-red-300" : "border-gray-300"}`}
+                  className={`block w-full pl-10 pr-10 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.password ? "border-red-300" : "border-gray-300"}`}
                   placeholder="Enter your password"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <FiEyeOff className="text-gray-500" />
+                  ) : (
+                    <FiEye className="text-gray-500" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="mt-2 text-sm text-red-600">
@@ -132,12 +154,18 @@ const CustomerLogin = () => {
               )}
             </div>
 
-            <div className="text-sm">
+            <div className="flex items-center justify-between text-sm">
               <Link
                 to="/forgot-password"
                 className="font-medium text-primary hover:text-primary-dark"
               >
                 Forgot your password?
+              </Link>
+              <Link
+                to="/vendor/login"
+                className="text-primary hover:text-primary-dark font-medium"
+              >
+                Seller Login
               </Link>
             </div>
             <div>

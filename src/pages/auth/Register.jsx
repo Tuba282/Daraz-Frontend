@@ -3,11 +3,12 @@ import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FiUser, FiMail, FiLock, FiPhone } from "react-icons/fi";
+import { FiUser, FiMail, FiLock, FiPhone, FiEye, FiEyeOff } from "react-icons/fi";
 import { registerUser, clearError } from "../../store/slices/authSlice";
 
 const Register = () => {
   const [role, setRole] = useState("customer"); // Default role
+  const [showPassword, setShowPassword] = useState(false); // toggle password visibility
   const {
     register,
     handleSubmit,
@@ -197,7 +198,7 @@ const Register = () => {
                   </div>
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     {...register("password", {
                       required: "Password is required",
                       minLength: {
@@ -205,9 +206,16 @@ const Register = () => {
                         message: "Must be at least 6 characters",
                       },
                     })}
-                    className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.password ? "border-red-300" : "border-gray-300"}`}
+                    className={`block w-full pl-10 pr-10 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.password ? "border-red-300" : "border-gray-300"}`}
                     placeholder="Enter password"
                   />
+                  <button type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <FiEyeOff className="text-gray-500" /> : <FiEye className="text-gray-500" />}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="mt-1 text-xs text-red-600">
@@ -229,15 +237,22 @@ const Register = () => {
                   </div>
                   <input
                     id="confirmPassword"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     {...register("confirmPassword", {
                       required: "Please confirm password",
                       validate: (value) =>
                         value === password || "Passwords do not match",
                     })}
-                    className={`block w-full pl-10 pr-3 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.confirmPassword ? "border-red-300" : "border-gray-300"}`}
+                    className={`block w-full pl-10 pr-10 py-2 sm:text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors.confirmPassword ? "border-red-300" : "border-gray-300"}`}
                     placeholder="Confirm password"
                   />
+                  <button type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <FiEyeOff className="text-gray-500" /> : <FiEye className="text-gray-500" />}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <p className="mt-1 text-xs text-red-600">

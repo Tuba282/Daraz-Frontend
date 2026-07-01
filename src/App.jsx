@@ -29,6 +29,11 @@ import UpdatePassword from "./pages/auth/UpdatePassword";
 import HelpCenter from "./pages/public/HelpCenter";
 import Faq from "./pages/public/Faq";
 import ContactCustomerCare from "./pages/public/ContactCustomerCare";
+import Dashboard from "./pages/vendor/Dashboard";
+import Products from "./pages/vendor/Products";
+import Orders from "./pages/vendor/Orders";
+import Analytics from "./pages/vendor/Analytics";
+import Settings from "./pages/vendor/Settings";
 import CategoryPage from "./pages/public/CategoryPage";
 import HelpCenterOrder from "./pages/public/HelpCenterOrder";
 import ManageAccount from "./pages/customer/ManageAccount";
@@ -152,6 +157,10 @@ function App() {
               path="/vendor"
               element={<div>Vendor Dashboard (TODO)</div>}
             />
+            <Route path="/vendor/products" element={<Products />} />
+            <Route path="/vendor/orders"   element={<Orders />} />
+            <Route path="/vendor/analytics" element={<Analytics />} />
+            <Route path="/vendor/settings" element={<Settings />} />
           </Route>
         </Route>
 
